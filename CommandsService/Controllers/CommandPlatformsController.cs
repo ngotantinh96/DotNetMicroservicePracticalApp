@@ -4,9 +4,9 @@ namespace CommandsService.Controller;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PlatformsController : ControllerBase
+public class CommandPlatformsController : ControllerBase
 {
-    public PlatformsController()
+    public CommandPlatformsController()
     {
         
     }
