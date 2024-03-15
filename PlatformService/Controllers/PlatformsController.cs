@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using PlatformService.AsyncDataServices;
 using PlatformService.Data;
 using PlatformService.Dtos;
 using PlatformService.Models;
@@ -14,12 +15,14 @@ public class PlatformsController : ControllerBase
     private readonly IPlatformRepository platformRepository;
     private readonly IMapper mapper;
     private readonly ICommandDataClient commandDataClient;
+    private readonly IMessageBusClient messageBusClient;
 
-    public PlatformsController(IPlatformRepository platformRepository, IMapper mapper, ICommandDataClient commandDataClient)
+    public PlatformsController(IPlatformRepository platformRepository, IMapper mapper, ICommandDataClient commandDataClient, IMessageBusClient messageBusClient)
     {
         this.platformRepository = platformRepository;
         this.mapper = mapper;
         this.commandDataClient = commandDataClient;
+        this.messageBusClient = messageBusClient;
     }
 
     [HttpGet]
@@ -51,13 +54,26 @@ public class PlatformsController : ControllerBase
 
         var platformReadDto = mapper.Map<PlatformReadDto>(platform);
 
+        /// Send message synchoronously
         try
         {
             await commandDataClient.SendPlatformToCommand(platformReadDto);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error when sending platform to Command Service: {ex.Message}");
+            Console.WriteLine($"Could not send synchoronously: {ex.Message}");
+        }
+
+        /// Send message asynchoronously
+        try
+        {
+            var platformPublishedDto = mapper.Map<PlatformPublishedDto>(platformReadDto);
+            platformPublishedDto.Event = "Platform_Published";
+            messageBusClient.PublishNewPlatform(platformPublishedDto);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not send asynchoronously: {ex.Message}");
         }
 
         return CreatedAtRoute(nameof(GetPlatformById), new { Id = platform.Id}, platformReadDto);
