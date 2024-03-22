@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PlatformService.AsyncDataServices;
 using PlatformService.Data;
+using PlatformService.SyncDataService.Grpc;
 using PlatformService.SyncDataService.Http;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,9 +23,10 @@ else
         options.UseInMemoryDatabase("InMem")
     );
 }
-builder.Services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase("InMem"));
 
 builder.Services.AddScoped<IPlatformRepository, PlatformRepository>();
+
+builder.Services.AddGrpc();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -48,6 +50,11 @@ if (app.Environment.IsDevelopment())
 // app.UseHttpsRedirection();
 
 app.MapControllers();
+app.MapGrpcService<GrpcPlatformService>();
+
+app.MapGet("/protos/platforms.proto", async context => {
+    await context.Response.WriteAsync(File.ReadAllText("Protos/platforms.proto"));
+});
 
 DatabaseInitializer.Seed(app, app.Environment.IsProduction());
 

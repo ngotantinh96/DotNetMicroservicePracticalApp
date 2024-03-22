@@ -4,7 +4,7 @@ metadata:
   name: ingress-srv
   annotations:
     kubernetes.io/ingress.class: nginx
-    ingress.kubernetes.io/rewrite-target: /$
+    ingress.kubernetes.io/rewrite-target: /$s
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   rules:
@@ -17,7 +17,7 @@ spec:
               service:
                 name: platforms-clusterip-srv
                 port: 
-                  number: 8080
+                  number: 80
           - path: /api/commandPlatforms
             pathType: Prefix
             backend:
